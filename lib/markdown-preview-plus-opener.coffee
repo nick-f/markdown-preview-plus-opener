@@ -17,18 +17,17 @@ module.exports = MarkdownPreviewPlusOpener =
         console.log 'markdown-preview-plus-opener-view: markdown-preview-plus package not found'
         return
 
-    atom.workspace.onDidOpen(@subscribePane)
+    atom.workspace.observeTextEditors(@subscribeEditor)
 
-  subscribePane: (event) ->
-    suffix = event?.uri?.match(/(\w*)$/)[1]
+  subscribeEditor: (editor) ->
+    suffix = editor?.getPath()?.match(/(\w*)$/)[1]
     if suffix in atom.config.get('markdown-preview-plus-opener.suffixes')
-      previewUrl = "markdown-preview-plus://editor/#{event.item.id}"
+      previewUrl = "markdown-preview-plus://editor/#{editor.id}"
       previewPane = atom.workspace.paneForURI(previewUrl)
-      workspaceView = atom.views.getView(atom.workspace)
       if not previewPane
-        atom.commands.dispatch workspaceView, 'markdown-preview-plus:toggle'
+        atom.commands.dispatch editor.element, 'markdown-preview-plus:toggle'
         if atom.config.get('markdown-preview-plus-opener.closePreviewWhenClosingEditor')
-          event.item.onDidDestroy ->
+          editor.onDidDestroy ->
             for pane in atom.workspace.getPanes()
               for item in pane.items when item.getURI() is previewUrl
                 pane.destroyItem(item)
